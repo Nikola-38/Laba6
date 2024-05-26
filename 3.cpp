@@ -1,48 +1,66 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
-// Метод Гаусса с выбором главного элемента
-void gaussElimination(double A[][5], double b[], double x[], int n) {
-    double maxVal, temp;
-    int maxRow;
+// Функция для выбора главного элемента в текущем столбце
+int findPivot(double A[][4], int col, int startRow, int n) {
+    double maxVal = fabs(A[startRow][col]);
+    int maxRow = startRow;
 
-    // Прямой ход
-    for (int i = 0; i < n - 1; i++) {
-        maxVal = fabs(A[i][i]);
-        maxRow = i;
-        for (int j = i + 1; j < n; j++) {
-            if (fabs(A[j][i]) > maxVal) {
-                maxVal = fabs(A[j][i]);
-                maxRow = j;
-            }
-        }
-
-        // Меняем местами строки
-        if (maxRow != i) {
-            for (int j = 0; j < n; j++) {
-                temp = A[i][j];
-                A[i][j] = A[maxRow][j];
-                A[maxRow][j] = temp;
-            }
-            temp = b[i];
-            b[i] = b[maxRow];
-            b[maxRow] = temp;
-        }
-
-        // Прямой ход
-        for (int j = i + 1; j < n; j++) {
-            double factor = A[j][i] / A[i][i];
-            for (int k = i; k < n; k++) {
-                A[j][k] -= factor * A[i][k];
-            }
-            b[j] -= factor * b[i];
+    for (int i = startRow + 1; i < n; i++) {
+        if (fabs(A[i][col]) > maxVal) {
+            maxVal = fabs(A[i][col]);
+            maxRow = i;
         }
     }
 
+    return maxRow;
+}
+
+void gaussElimination(double A[][4], vector<double>& b, vector<double>& x, int n) {
+    double temp;
+
+    // Прямой ход
+    cout << "Прямой ход:" << endl;
+    for (int k = 0; k < n - 1; k++) {
+        // Выбор ведущего элемента
+        int maxRow = findPivot(A, k, k, n);
+
+        // Меняем местами строки, если необходимо
+        if (maxRow != k) {
+            for (int j = 0; j < n; j++) {
+                temp = A[k][j];
+                A[k][j] = A[maxRow][j];
+                A[maxRow][j] = temp;
+            }
+            swap(b[k], b[maxRow]);
+        }
+
+        // Прямой ход
+        for (int i = k + 1; i < n; i++) {
+            double factor = A[i][k] / A[k][k];
+            for (int j = k; j < n; j++) {
+                A[i][j] -= factor * A[k][j];
+            }
+            b[i] -= factor * b[k];
+        }
+
+        // Вывод промежуточных результатов
+        cout << "Шаг " << k + 1 << ":" << endl;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << setw(10) << A[i][j];
+            }
+            cout << " | " << setw(10) << b[i] << endl;
+        }
+        cout << endl;
+    }
+
     // Обратный ход
+    cout << "\nОбратный ход:" << endl;
     x[n - 1] = b[n - 1] / A[n - 1][n - 1];
     for (int i = n - 2; i >= 0; i--) {
         double sum = b[i];
@@ -51,25 +69,55 @@ void gaussElimination(double A[][5], double b[], double x[], int n) {
         }
         x[i] = sum / A[i][i];
     }
+
+    // Вывод конечной матрицы
+    cout << "\nКонечная матрица:\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << setw(10) << A[i][j];
+        }
+        cout << " | " << setw(10) << b[i] << endl;
+    }
 }
 
+// Преобразование системы Ах=b к виду х=Сх+f
+void formCanonicalSystem(double A[][4], vector<double>& b, double C[][4], vector<double>& f, int n) {
+    for (int i = 0; i < n; i++) {
+        f[i] = b[i] / A[i][i];
+        for (int j = 0; j < n; j++) {
+            if (j != i) {
+                C[i][j] = -A[i][j] / A[i][i];
+            } else {
+                C[i][j] = 0.0;
+            }
+        }
+    }
+}
 
 // Метод простых итераций
-void simpleIteration(double A[][5], double b[], double x[], int n, double epsilon) {
-    double xNew[4], maxDiff;
-    int iter = 0;
+void simpleIteration(double C[][4], vector<double>& f, vector<double>& x, int n, double epsilon) {
+    vector<double> xNew(n);
+    int k = 0;
+    double maxDiff = 0.0;
+
+    // Задаем начальное приближение
+    for (int i = 0; i < n; i++) {
+        x[i] = 0.0;
+    }
+
+    cout << "N" << setw(10) << "x1" << setw(10) << "x2" << setw(10) << "x3" << setw(10) << "x4" << setw(10) << "εn" << endl;
 
     do {
+        // Вычисляем новое приближение
         for (int i = 0; i < n; i++) {
-            double sum = b[i];
+            double sum = f[i];
             for (int j = 0; j < n; j++) {
-                if (j != i) {
-                    sum -= A[i][j] * x[j];
-                }
+                sum += C[i][j] * x[j];
             }
-            xNew[i] = sum / A[i][i];
+            xNew[i] = sum;
         }
 
+        // Проверяем условие остановки
         maxDiff = 0.0;
         for (int i = 0; i < n; i++) {
             if (fabs(xNew[i] - x[i]) > maxDiff) {
@@ -77,21 +125,27 @@ void simpleIteration(double A[][5], double b[], double x[], int n, double epsilo
             }
             x[i] = xNew[i];
         }
-        iter++;
+        k++;
+
+        // Вывод результатов в таблицу
+        cout << k << setw(10) << x[0] << setw(10) << x[1] << setw(10) << x[2] << setw(10) << x[3] << setw(10) << maxDiff << endl;
     } while (maxDiff > epsilon);
 
-    cout << "Число итераций: " << iter << endl;
+    cout << "Число итераций: " << k << endl;
 }
 
 int main() {
-    double A[4][5] = {
-        {-0.88, -0.04, 0.21, -18, -1.24},
-        {0.25, -1.23, 0.1, -0.09, 0.91},
-        {-0.21, 0.1, 0.8, -0.13, 2.56},
-        {0.15, -1.31, 0.06, 0.91, -0.88}
+    system("chcp 65001");
+    double A[4][4] = {
+        {-0.88, -0.04, 0.21, -18},
+        {0.25, -1.23, 0.1, -0.09},
+        {-0.21, 0.1, 0.8, -0.13},
+        {0.15, -1.31, 0.06, 0.91}
     };
-    double b[4] = {-1.24, 0.91, 2.56, -0.88};
-    double x[4] = {0.0};
+    vector<double> b = {-1.24, 0.91, 2.56, -0.88};
+    vector<double> x(4, 0.0);
+    double C[4][4] = {0.0};
+    vector<double> f(4, 0.0);
 
     // Решение методом Гаусса
     cout << "Решение методом Гаусса:" << endl;
@@ -101,13 +155,16 @@ int main() {
     cout << "x3 = " << x[2] << endl;
     cout << "x4 = " << x[3] << endl;
 
+    // Преобразуем систему к каноническому виду
+    formCanonicalSystem(A, b, C, f, 4);
+
     // Решение методом простых итераций
     cout << "\nРешение методом простых итераций:" << endl;
-    simpleIteration(A, b, x, 4, 0.001);
+    simpleIteration(C, f, x, 4, 0.001);
     cout << "x1 = " << x[0] << endl;
     cout << "x2 = " << x[1] << endl;
-    cout << "x3 = " << x[2] << endl;
-    cout << "x4 = " << x[3] << endl;
+     cout << "x3 = " << x[2] << endl;
+      cout << "x4 = " << x[3] << endl;
 
-    return 0;
+      return 0;
 }
