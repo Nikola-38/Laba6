@@ -36,17 +36,17 @@ void gaussElimination(double A[][4], vector<double>& b, vector<double>& x, int n
                 A[i][j] -= factor * A[k][j];
             }
             b[i] -= factor * b[k];
-        }
 
-        // Вывод промежуточных результатов
-        cout << "Шаг " << k + 1 << ":" << endl;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                cout << setw(10) << A[i][j];
+            // Вывод промежуточных результатов после каждой операции со строкой
+            cout << "Шаг " << k + 1 << ", операция со строкой " << i + 1 << ":" << endl;
+            for (int row = 0; row < n; row++) {
+                for (int col = 0; col < n; col++) {
+                    cout << setw(10) << A[row][col];
+                }
+                cout << " | " << setw(10) << b[row] << endl;
             }
-            cout << " | " << setw(10) << b[i] << endl;
+            cout << endl;
         }
-        cout << endl;
     }
 
     // Обратный ход
