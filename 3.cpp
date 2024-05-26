@@ -29,16 +29,6 @@ void gaussElimination(double A[][4], vector<double>& b, vector<double>& x, int n
         // Выбор ведущего элемента
         int maxRow = findPivot(A, k, k, n);
 
-        // Меняем местами строки, если необходимо
-        if (maxRow != k) {
-            for (int j = 0; j < n; j++) {
-                temp = A[k][j];
-                A[k][j] = A[maxRow][j];
-                A[maxRow][j] = temp;
-            }
-            swap(b[k], b[maxRow]);
-        }
-
         // Прямой ход
         for (int i = k + 1; i < n; i++) {
             double factor = A[i][k] / A[k][k];
