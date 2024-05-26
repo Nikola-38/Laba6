@@ -132,6 +132,13 @@ void simpleIteration(double C[][4], vector<double>& f, vector<double>& x, int n,
     } while (maxDiff > epsilon);
 
     cout << "Число итераций: " << k << endl;
+
+    // Вывод сообщения о сходимости или расходимости
+    if (maxDiff <= epsilon) {
+        cout << "Метод сходится." << endl;
+    } else {
+        cout << "Метод расходится." << endl;
+    }
 }
 
 int main() {
@@ -158,13 +165,15 @@ int main() {
     // Преобразуем систему к каноническому виду
     formCanonicalSystem(A, b, C, f, 4);
 
+
     // Решение методом простых итераций
     cout << "\nРешение методом простых итераций:" << endl;
     simpleIteration(C, f, x, 4, 0.001);
     cout << "x1 = " << x[0] << endl;
     cout << "x2 = " << x[1] << endl;
-     cout << "x3 = " << x[2] << endl;
-      cout << "x4 = " << x[3] << endl;
+    cout << "x3 = " << x[2] << endl;
+    cout << "x4 = " << x[3] << endl;
 
-      return 0;
+
+    return 0;
 }
