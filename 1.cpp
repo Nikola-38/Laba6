@@ -2,6 +2,7 @@
 #include <vector>
 #include <iomanip>
 #include <random>
+#include "windows.h"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ vector<vector<int>> createSquareMatrix(int N) {
 vector<vector<int>> createRectangleMatrix2(int M, int N) {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(-100, 100);
+    uniform_int_distribution<> dis(100, 200);
 
     vector<vector<int>> matrix(M, vector<int>(N));
     for (int i = 0; i < M; i++) {
@@ -59,77 +60,118 @@ vector<vector<int>> findMaxPositiveRows(const vector<vector<int>>& matrix) {
 //Задание 2
 // Функция для нахождения числа, встречающегося чаще всего в матрице
 int findMostFrequentNumber(const vector<vector<int>>& matrix) {
-    vector<int> frequencyMap(201, 0); // Диапазон чисел от -100 до 100
+    vector<int> frequencyMap(101, 0); // Диапазон чисел от 100 до 200
     int maxFrequency = 0;
     int mostFrequentNumber = -1;
     bool allUnique = true;
     for (const auto& row : matrix) {
-        for (int num : row) {
-            frequencyMap[num + 100]++; // Смещение для учета отрицательных чисел
-            if (frequencyMap[num + 100] > 1) {
-                allUnique = false;
-            }
-            if (frequencyMap[num + 100] > maxFrequency) {
-                maxFrequency = frequencyMap[num + 100];
-                mostFrequentNumber = num;
-            }
-        }
+    for (int num : row) {
+    frequencyMap[num - 100]++; 
+    if (frequencyMap[num - 100] > 1) { // Проверка на наличие повторяющихся чисел
+    allUnique = false;
     }
-    if (allUnique) {
-        return -1;
+    if (frequencyMap[num - 100] > maxFrequency) { // Проверка на наиболее часто встречающееся число
+    maxFrequency = frequencyMap[num - 100];
+    mostFrequentNumber = num;
+ }
+    }
+    }
+    if (allUnique) { // Если все числа уникальны, возвращаем -1
+    return -1;
     }
     return mostFrequentNumber;
 }
 
-//Задание 3
-// Функция для реализации клеточного автомата Джона Конвея
+
 void gameOfLife(vector<vector<int>>& grid, int generations) {
+    // Получение количества строк и столбцов в матрице
     int rows = grid.size();
     int cols = grid[0].size();
 
+    // Создание временной матрицы для хранения следующего состояния игрового поля
     vector<vector<int>> nextGrid(rows, vector<int>(cols, 0));
 
+    // Итерация по количеству поколений
     for (int gen = 0; gen < generations; gen++) {
+        // Итерация по каждой клетке на текущем игровом поле
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
+                // Подсчет живых соседей для текущей клетки
                 int liveNeighbors = 0;
                 for (int di = -1; di <= 1; di++) {
                     for (int dj = -1; dj <= 1; dj++) {
+                        // Пропуск текущей клетки
                         if (di == 0 && dj == 0) {
                             continue;
                         }
+                        // Вычисление координат соседней клетки
                         int x = i + di;
                         int y = j + dj;
+                        // Проверка на выход за границы игрового поля и живой сосед
                         if (x >= 0 && x < rows && y >= 0 && y < cols && grid[x][y] == 1) {
                             liveNeighbors++;
                         }
                     }
                 }
+                // Применение правил игры жизнь для текущей клетки
                 if (grid[i][j] == 1) {
+                    // Клетка умирает при наличии менее 2 или более 3 живых соседей
                     if (liveNeighbors < 2 || liveNeighbors > 3) {
                         nextGrid[i][j] = 0;
                     } else {
                         nextGrid[i][j] = 1;
                     }
                 } else {
+                    // Клетка оживает при наличии ровно 3 живых соседей
                     if (liveNeighbors == 3) {
                         nextGrid[i][j] = 1;
+                    } else {
+                        nextGrid[i][j] = 0;
                     }
                 }
             }
         }
+
+        // Обновление игрового поля следующим поколением
         grid = nextGrid;
+        // Очистка временной матрицы для следующего поколения
         nextGrid = vector<vector<int>>(rows, vector<int>(cols, 0));
-        system("cls");
+
+        // Очистка консоли для вывода нового состояния игрового поля
+        #ifdef _WIN32
+            system("cls");
+        #else
+            system("clear");
+        #endif
+
+        // Вывод текущего состояния игрового поля в отдельном терминале
+        #ifdef _WIN32
+            system("start cmd /c cls && mode con: cols=10 lines=20 && ");
+        #else
+            system("clear && printf '\e[3;1H'");
+        #endif
         for (const auto& row : grid) {
             for (int cell : row) {
-                cout << cell << " ";
+                if (cell == 0) {
+                    cout << "*";
+                } else {
+                    cout << "1 ";
+                }
             }
             cout << endl;
         }
         cout << endl;
+
+        // Задержка на 1 секунду
+        #ifdef _WIN32
+            Sleep(1000);
+        #else
+            usleep(1000000);
+        #endif
     }
 }
+
+
 
 int main() {
     system("chcp 65001");
@@ -192,7 +234,7 @@ int main() {
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, 1);
 
-    int rows = 10, cols = 30;
+    int rows = 15, cols = 20;
     vector<vector<int>> gameGrid(rows, vector<int>(cols, 0));
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -204,5 +246,4 @@ int main() {
         }
     }
     return 0;
-
 }
